@@ -66,27 +66,54 @@ And with a zero-latency model you would *still* need ~4 seconds to hear a spoken
 
 Combined: **under 2 seconds**, which a natural filler ("right… well…") can cover.
 
-### 2. Addressee detection must be physical, not learned
+### 2. Two separate problems: who is speaking, and who they are speaking to
 
-The core software problem: when the wearer speaks, are they talking to the other person (ignore) or to the coach (respond)?
+These get conflated constantly — an earlier version of this document conflated
+them too. They have different solutions and different reliability.
 
-Solving this on the transcript is the wrong move. Qwen3-Omni does not do speaker diarization — it returns flat text for a two-voice recording. And a classifier deciding *"was that addressed to me?"* has false positives, where a false positive means the coach interrupts you mid-sentence in front of the person you are talking to.
+**Who is speaking — solved in hardware.**
 
-**Solve it with two sensors of different physics instead:**
+Qwen3-Omni does not do speaker diarization; it returns flat text for a two-voice
+recording. So use two sensors with different physics:
 
 | Sensor | Hears |
 |---|---|
 | Air MEMS microphone | The room: the other person **and** you |
 | Bone-conduction accelerometer | **Only you**, via skull vibration |
 
-An accelerometer is a mechanical sensor with essentially no acoustic sensitivity. Your voice reaches it structurally (vocal folds → skull → chassis → proof mass). The other person's voice arrives as airborne pressure and cannot use that path. This is why the technique is used for own-voice detection in jet cockpits and factories — the isolation is a property of the transducer, not a threshold.
+An accelerometer is a mechanical sensor with essentially no acoustic
+sensitivity. Your voice reaches it structurally (vocal folds → skull → chassis →
+proof mass). The other person's voice arrives as airborne pressure and cannot
+use that path. This is why the technique is used for own-voice detection in jet
+cockpits and factories — the isolation is a property of the transducer, not a
+threshold.
 
 |  | Accelerometer: signal | Accelerometer: silent |
 |---|---|---|
 | **Air mic: signal** | **wearer speaking** | **other person speaking** |
 | **Air mic: silent** | (n/a) | silence |
 
-No model, no trained threshold, no false positives.
+This is robust because it is physical, but it is **not free of false positives**.
+Chewing, footsteps, scratching the housing and the device's own transducer are
+all structure-borne and all reach the accelerometer. They are rejected by
+band-passing to the voice range and by muting the channel during playback — both
+verifiable, neither automatic. Phase 3 exists to measure the residual rate.
+
+**Who they are speaking to — solved in UX, not physics.**
+
+Nothing in the table above tells you whether the wearer is addressing the coach
+or the person in front of them. That distinction is resolved by an **explicit
+trigger**: a double tap on the housing, or a wake word.
+
+This is a deliberate design decision, not a physical guarantee, and it is worth
+being honest about the difference. What the accelerometer *does* buy is that the
+trigger becomes reliable: run wake-word detection **only on the bone channel**
+and the other person can say the wake word all afternoon without firing
+anything, because their voice never reaches that sensor.
+
+Implicit addressing — inferring intent from a quiet murmur, or from a classifier
+over the transcript — is a later layer, and a risky one. A false positive means
+the coach interrupts you mid-sentence in front of the person you are talking to.
 
 ### 3. Saturation is not the risk; SNR is
 
@@ -166,25 +193,29 @@ Full table with links, sourcing, and wiring: [docs/HARDWARE.md](docs/HARDWARE.md
 
 ## Validation plan
 
-Five unknowns. **The two that can kill the project require building nothing.** Do those first, in parallel.
+Five unknowns. **The two that can kill the project require building nothing — start with those, Phase 1 first.**
 
-| Phase | Question | Cost | Kill criterion |
-|---|---|---|---|
-| **0** | Does a body-worn mic capture the other person in a bar? | $14 | Transcript of the other speaker unusable in noise |
-| **1** | Is a 3-word prompt at 2 s useful or distracting? | €0 | You stop reaching for it after five real conversations |
-| 2 | Is bone-conducted speech intelligible at sane power? | $25 | — |
-| 3 | Does own-voice detection hold up? | $10 | — |
-| 4 | Integration, battery, enclosure | rest | — |
+| Order | Phase | Question | Cost | Kill criterion |
+|---|---|---|---|---|
+| **1st** | **1** | Is a 3-word prompt at 2 s useful, or does it make you converse worse? | **€0** | You stop reaching for it by the fifth real conversation |
+| **2nd** | **0** | Does a body-worn mic capture the other person in a bar? | $14 | Transcript of the other speaker unusable in noise |
+| 3rd | 2 | Is bone-conducted speech intelligible at sane power? | $25 | — |
+| 4th | 3 | Does own-voice detection hold up? | $10 | — |
+| 5th | 4 | Integration, battery, enclosure | rest | — |
 
-Phases 2–4 are only worth starting if 0 and 1 both pass. Detail and protocols: [docs/VALIDATION.md](docs/VALIDATION.md)
+Phase 1 comes first because it costs nothing and tests the question that decides the product. It must be measured **against a baseline of uncoached conversations**, not against how it felt — see risk 4. Phases 2–4 are only worth starting if 1 and 0 both pass.
+
+Detail and protocols: [docs/VALIDATION.md](docs/VALIDATION.md)
 
 ## Honest risk register
 
 Summarised; full version with sources in [docs/RISKS.md](docs/RISKS.md).
 
-- **Legal.** Recording a conversation you participate in is legal in Spain and covered by GDPR's household exemption for strictly personal use. **That exemption ends the moment this has users.** ePrivacy Art. 5(1) requires consent from *all* parties, and the other person never consented. This is a product-defining constraint, not a footnote.
-- **Market.** Amazon acquired Bee (Jul 2025). Meta acquired Limitless (Dec 2025); the Pendant is no longer sold. Humane raised $230M, shipped <10,000 units, sold to HP for $116M. Nobody has built a standalone business here. OpenAI's screen-free, behind-the-ear "Sweetpea" is in prototyping.
-- **Technical.** SNR in noisy rooms is the top risk. Then mechanical feedback, then antenna detuning against the skull (tissue shifts resonance 4–6% and the ISM band is only 3.4% wide — a 5% shift puts you outside it entirely).
+- **Legal.** Recording a conversation you participate in is legal in Spain and covered by GDPR's household exemption for strictly personal use. **That exemption ends the moment this has users.** ePrivacy Art. 5(1) requires consent from *all* parties; GDPR Chapter V additionally makes sending that third party's voice to a non-EEA inference provider a cross-border transfer. **When Meta acquired Limitless it withdrew the service from the EU and UK entirely** rather than operate it there — the best-resourced possible actor concluded exit was cheaper than compliance.
+- **Cognitive.** Listening to a prompt competes with listening to a person. The irrelevant speech effect is well documented, and self-report will not detect it: feeling equipped and conversing worse coexist perfectly well.
+- **Market.** Amazon acquired Bee (Jul 2025). Meta acquired Limitless (Dec 2025). Humane raised $230M, shipped <10,000 units, sold to HP for $116M. Nobody has built a standalone business here. OpenAI's screen-free, behind-the-ear "Sweetpea" is in prototyping.
+- **Technical.** SNR in noisy rooms is the top risk. Then pre-generation firing on incomplete context, mechanical feedback, and antenna detuning against the skull (tissue shifts resonance 4–6%; the ISM band is only 3.4% wide, so a 5% shift puts you outside it entirely).
+- **Battery.** ~4 hours over Wi-Fi, not the 15–20 h an earlier version of this document claimed. All-day operation requires moving from ESP32-S3 to nRF5340.
 
 ## Prior art
 
@@ -197,9 +228,34 @@ Summarised; full version with sources in [docs/RISKS.md](docs/RISKS.md).
 
 ## Getting involved
 
-Nothing is built. The most valuable contribution right now is **Phase 0 data**: record real conversations in real noise with a body-worn mic, run them through an omni model, and publish the transcripts. That single measurement decides whether any of the rest is worth doing.
+Nothing is built. **The author is running Phases 1 and 0 and will publish the
+results here, positive or negative.** An earlier version of this section asked
+contributors to run Phase 0 instead — which was asking strangers to do the €0
+and $14 experiments while keeping the writing. That was the wrong way round.
 
-If you run it, open an issue with your recordings and results — including negative ones. A well-documented failure here saves everyone else the $80.
+Useful contributions in the meantime:
+
+- **Tell us where this is wrong.** Every correction in the revision history came
+  from someone reading the spec critically. That is worth more than agreement.
+- **Independent measurements**, if you happen to have the parts already — a
+  second data point on capture in noise, or on ESP32-S3 BLE current draw, which
+  is currently an estimate rather than a measurement.
+- **Prior art we missed**, especially anything that already tried live
+  conversational prompting and failed. Negative results are the scarce resource
+  in this category.
+
+If you run anything, open an issue with the raw data, including failures. A
+well-documented failure saves everyone else the $80.
+
+## Revision history
+
+**2026-08-08** — Second pass after external review. Four corrections to things
+the first version got wrong: an overstated battery budget (3–4×), conflating
+speaker diarization with addressee detection, pre-generation described without
+acknowledging it fires on incomplete context, and a legal section that missed
+GDPR Chapter V transfers and Meta's EU withdrawal of Limitless. One new risk
+added (cognitive interference). Validation order swapped. Details in
+[docs/RISKS.md](docs/RISKS.md#revision-history).
 
 ## License
 

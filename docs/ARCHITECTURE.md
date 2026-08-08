@@ -59,6 +59,11 @@ The tradeoff is that Wi-Fi only works on known networks and draws considerably m
 
 Determined by hardware, evaluated in code. No model involved.
 
+**Scope: this answers "who is speaking", not "who are they speaking to".** The
+second question is resolved by the explicit trigger further down, which is a UX
+decision rather than a physical property. Keeping the two separate matters —
+conflating them is how a design starts claiming guarantees it does not have.
+
 ```
                      ACCELEROMETER
                   ┌───────────┬───────────┐
@@ -86,10 +91,16 @@ Two properties worth noting:
 
 **Double-tap comes free.** Tap detection is a standard IMU function, using the sensor already present. It is also the most discreet possible trigger: you touch behind your ear.
 
-### Gating rules
+### Gating rules — required, not optional
 
-- **Mute the accelerometer channel during playback.** The transducer vibrates the same chassis; without this the device detects itself as the wearer speaking.
-- **Band-pass the accelerometer to the voice band.** Footsteps, chewing and scratching are structure-borne too. The LSM6DSV16BX audio channel is specified above 1 kHz precisely to sit clear of the motion band.
+The accelerometer is robust because it is physical, but it is **not free of
+false positives**. Anything that vibrates the chassis reaches it:
+
+- **Mute the accelerometer channel during playback.** The transducer vibrates the same chassis by design; without this the device detects itself as the wearer speaking. This is the largest single source of false positives.
+- **Band-pass to the voice band.** Footsteps, chewing and scratching are structure-borne too. The LSM6DSV16BX audio channel is specified above 1 kHz precisely to sit clear of the motion band.
+
+Both are straightforward, neither is automatic, and the residual rate is
+unmeasured. Phase 3 exists to quantify it.
 
 ### An optional second layer
 
@@ -117,6 +128,54 @@ The trigger does not start a request. It **releases audio that already exists**.
 
 This mirrors what humans do: formulating a response takes ≥600 ms, yet people answer within 200 ms, because they predict the end of the turn and prepare in advance.
 
+### The unsolved problem in pre-generation
+
+*Added 2026-08-08 after external review. This is the largest open question in
+the design and an earlier version of this document did not acknowledge it.*
+
+Generating before the turn ends means generating on **incomplete context**, and
+turn-final position is where the payload usually sits — the name, the figure,
+the actual question. You are producing an answer before you know what is being
+asked.
+
+Telegraphic output fixes output latency. It does nothing for having generated
+against the wrong premise.
+
+**Speculative generation is the naive fix and it is bad.** Regenerate every ~2 s
+and keep the latest, and you get: answers to half-finished questions, and a cost
+structure that is nothing like the one quoted below.
+
+| Strategy | Output tokens/day (8 h) | Cost/month |
+|---|---|---|
+| Generate on turn-end only | ~30 k | **~$1** |
+| Speculate every 2 s | ~720 k | **~$21** |
+
+Not ruinous, but 20× the headline figure, and it buys worse answers.
+
+**The better shape: pre-generate context, not answers.**
+
+```
+while they speak:
+    stream transcript      → rolling summary        (cheap)
+    detect entities/topics → warm retrieval         (cheap)
+    keep prompt cache hot  → no cold context load
+
+on turn-end (context now complete):
+    ONE short generation, 5-word cap, over a warm cache
+```
+
+The expensive, slow parts — understanding the conversation, retrieving what is
+relevant, loading context — happen while they are still talking. Only the final
+short generation waits for the complete turn, and with a warm prompt cache that
+can plausibly land under ~400 ms.
+
+That is still pre-generation. It pre-generates the **raw material** rather than
+the product.
+
+**This is untested.** Whether a sub-400 ms final generation is achievable
+against a hosted endpoint from Spain is exactly the kind of thing Phase 1 must
+measure rather than assume.
+
 ## Output contract
 
 The five-word cap is not a style preference, it is a latency requirement:
@@ -140,7 +199,7 @@ The coach supplies ammunition, not scripts. Full prompt specification in [SOFTWA
 | Weights | Apache 2.0 |
 | Novita pricing | $0.25/M in, $0.97/M out |
 
-At ~427 audio tokens per minute, an hour of conversation costs roughly **$0.02**. Cost is not a design constraint.
+At ~427 audio tokens per minute, an hour of conversation costs roughly **$0.02** if you generate once per turn. Cost is not a design constraint **as long as you do not speculate** — see [the pre-generation section](#the-unsolved-problem-in-pre-generation), where regenerating every 2 s takes it to ~$21/month.
 
 Reasoning models are disqualified regardless of price: GLM-5.2 scores higher on intelligence but has 1.57 s TTFT and is documented as verbose. In voice, verbosity is unskippable time.
 

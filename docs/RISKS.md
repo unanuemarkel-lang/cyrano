@@ -17,10 +17,25 @@ Both of those protections **evaporate the moment this has users**:
 
 - **ePrivacy Art. 5(1)** prohibits listening, recording, storage or surveillance of communications without the consent of *the users concerned* — plural. In a conversation, that includes the person across from you, who consented to nothing.
 - Processing locally instead of in the cloud improves the data-transfer story significantly, but **does not solve this**. Art. 5(1) governs the recording, not where the inference runs.
+- **GDPR Chapter V — international transfer.** *Added after review; the first version missed this.* The other person's voice does not merely get recorded, it **leaves the EU**. Novita, Fireworks and DashScope all serve from outside the EEA — DashScope's realtime endpoints are Singapore and Beijing. That is a cross-border transfer of biometric-adjacent personal data belonging to someone who never consented, and it is a separate violation from the recording itself. Self-hosting inside the EU fixes the transfer. It does not fix the consent.
 - **EU AI Act Art. 43** requires the AI component's conformity assessment to be integrated into the Radio Equipment Directive assessment. Your radio certification becomes contingent on your AI compliance.
 - **GPSR** has applied to consumer products including AI-enabled ones since December 2024.
 
-**Implication:** ship this as personal hardware, open source, build-it-yourself. Any commercial path needs a real answer to third-party consent — a visible recording indicator, a consent gesture, on-device-only processing with no retention, or a use case where all parties are participants who opted in. Solve that before writing a business plan, not after.
+### The precedent nobody should ignore
+
+When Meta acquired Limitless in December 2025, it **discontinued the service in
+the EU, UK, Brazil, Israel, South Korea, Turkey and China**. Users had until
+19 December 2025 to export their data before permanent deletion.
+
+Read that carefully. Meta — with the best privacy counsel money can buy and an
+existing EU regulatory apparatus — concluded it was cheaper to **exit the
+European market entirely** than to operate an always-listening conversation
+recorder inside it.
+
+If you are building this in Spain, that is not a footnote. It is the most
+informative data point in this entire document.
+
+**Implication:** ship this as personal hardware, open source, build-it-yourself. Any commercial path needs a real answer to third-party consent — a visible recording indicator, a consent gesture, on-device-only processing with no retention and no transfer, or a use case where all parties are participants who opted in. Solve that before writing a business plan, not after.
 
 ---
 
@@ -46,7 +61,7 @@ The category's track record:
 |---|---|
 | **Humane AI Pin** | $230M raised, elite team, **<10,000 units shipped**, sold to HP for $116M |
 | **Bee** | Acquired by Amazon, July 2025 |
-| **Limitless** | Acquired by Meta, December 2025; Pendant no longer sold to new customers |
+| **Limitless** | Acquired by Meta, December 2025; Pendant no longer sold, and **service withdrawn entirely from the EU and UK** (see risk 1) |
 
 Read that as two things at once. There is acquisition appetite — but **none of the three built a standalone business**, and all three had working products. They did not die from token costs or latency. They died because people did not come back the next day.
 
@@ -54,7 +69,38 @@ Phase 1 is the cheapest possible test of this, and it costs nothing.
 
 ---
 
-## 4. Latency floor 🟠
+## 4. Cognitive interference — the risk this document originally missed 🔴
+
+*Added 2026-08-08 after external review.*
+
+Listening to a three-word prompt is not free. Speech competes with speech: the
+**irrelevant speech effect** is a well-documented impairment of verbal working
+memory and comprehension when speech-like sound is present during a verbal task.
+A conversation is a verbal task. So is parsing a prompt.
+
+Two honest qualifications:
+
+- The design mitigates this more than the raw effect suggests. Playback is
+  released by the wearer's own double tap, so it lands in a gap they chose,
+  not on top of the other person's speech. It is closer to a stage prompter
+  than to a distractor track.
+- But the mitigation is untested, and the wearer may tap badly, or the other
+  person may resume talking.
+
+**The methodological trap is worse than the effect.** The feeling of having a
+superpower and the fact of conversing worse coexist perfectly well. Self-report
+will not detect this — a wearer who enjoys the device will rate it useful
+regardless of whether their conversations got better.
+
+**Phase 1 must therefore measure performance, not sensation.** Record the
+conversations. Score them afterwards, or have the other party score them, blind
+to whether the coach was active. If that is too heavy, at minimum alternate
+coached and uncoached conversations and compare, rather than asking yourself how
+it felt.
+
+---
+
+## 5. Latency floor 🟠
 
 ~4 seconds of the naive 5–9 second loop is the irreducible time to *hear* a spoken sentence. A zero-latency model does not fix it.
 
@@ -62,7 +108,7 @@ Mitigated by pre-generation plus a hard 5-word output cap, which brings it under
 
 ---
 
-## 5. Mechanical feedback 🟠
+## 6. Mechanical feedback 🟠
 
 The bone transducer vibrates the chassis by design. That energy reaches the accelerometer (which will report the wearer speaking) and the air microphone package.
 
@@ -70,7 +116,7 @@ Mitigated by gating the accelerometer during playback — you know exactly when 
 
 ---
 
-## 6. Antenna detuning against the skull 🟠
+## 7. Antenna detuning against the skull 🟠
 
 Tissue attenuates ~0.4 dB/mm at 2.4 GHz and shifts antenna resonance **4–6%** depending on body location. The entire ISM band is **3.4% wide** — a 5% shift puts you outside it, not merely degraded.
 
@@ -80,7 +126,7 @@ Mitigated by outward-facing antenna with the ground plane between it and the sku
 
 ---
 
-## 7. Competition and timing 🟠
+## 8. Competition and timing 🟠
 
 The category is not empty:
 
@@ -94,7 +140,7 @@ Every efficiency gain in open models lowers the floor for **everyone simultaneou
 
 ---
 
-## 8. Build effort 🟡
+## 9. Build effort 🟡
 
 Components are under $80. The real cost is time.
 
@@ -104,7 +150,7 @@ Never design a custom RF PCB. Certified modules only.
 
 ---
 
-## 9. Battery 🟡
+## 10. Battery 🟡
 
 Always-on listening is brutal on wearables: Amazon's Bee drops from an advertised 7 days to 1.5–2 days in real use, a >70% reduction.
 
@@ -114,4 +160,8 @@ The estimate here (~20–30 mA average, 15–20 h on 500 mAh) depends on a low p
 
 ## Sources
 
-Latency and turn-taking: modal inter-turn gap ~200 ms across languages; response formulation ≥600 ms with predictive preparation. Microphone specs: SPH0645LM4H, AOP 120 dB SPL, SNR 65 dB, 24-bit I2S. Own-voice SPL at ear ~75 dB+; conversational speech 60–68 dB at 1 m. Model: Qwen3-Omni technical report (arXiv 2509.17765), 234 ms first-packet cold start; vLLM-Omni serving benchmarks (632 ms audio TTFP, RTF 0.47 at concurrency 64 on a 3-GPU staged deployment). Bluetooth: Apple AVAudioSession documentation on A2DP duplex routing. RF: 2.4 GHz tissue attenuation and wearable antenna detuning literature. Legal: ePrivacy Directive Art. 5(1), GDPR Art. 2(2)(c), EU AI Act Art. 43, GPSR, Spanish Criminal Code Art. 197. Market: reported acquisitions and shipment figures as of August 2026.
+Latency and turn-taking: modal inter-turn gap ~200 ms across languages; response formulation ≥600 ms with predictive preparation. Microphone specs: SPH0645LM4H, AOP 120 dB SPL, SNR 65 dB, 24-bit I2S. Own-voice SPL at ear ~75 dB+; conversational speech 60–68 dB at 1 m. Model: Qwen3-Omni technical report (arXiv 2509.17765), 234 ms first-packet cold start; vLLM-Omni serving benchmarks (632 ms audio TTFP, RTF 0.47 at concurrency 64 on a 3-GPU staged deployment). Bluetooth: Apple AVAudioSession documentation on A2DP duplex routing. RF: 2.4 GHz tissue attenuation and wearable antenna detuning literature. Legal: ePrivacy Directive Art. 5(1), GDPR Art. 2(2)(c) and Chapter V, EU AI Act Art. 43, GPSR, Spanish Criminal Code Art. 197. Market: reported acquisitions and shipment figures as of August 2026; Meta's withdrawal of Limitless from the EU, UK, Brazil, Israel, South Korea, Turkey and China with a 19 December 2025 data-export deadline. Power: ESP32-S3 Wi-Fi average current ~120 mA per Espressif module measurements and community reports. Cognitive: irrelevant speech effect literature on verbal working memory.
+
+## Revision history
+
+**2026-08-08** — Second pass after an external review of the initial commit. Four corrections, all of them things the first version got wrong rather than merely omitted: the power budget conflated Wi-Fi and BLE regimes and overstated battery life by 3–4×; the README presented speaker diarization as if it solved addressee detection and claimed "no false positives"; pre-generation was described without acknowledging that it generates against incomplete context; and the legal section missed GDPR Chapter V transfers and the Meta/Limitless EU withdrawal. A new risk (cognitive interference) was added. Validation phase order was swapped.

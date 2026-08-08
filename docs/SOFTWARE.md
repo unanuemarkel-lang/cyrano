@@ -101,6 +101,14 @@ Set 16 kHz mono. **Enable PSRAM in the Arduino IDE before uploading** — the re
 
 Full-duplex I2S: shared SCK and LRCK, `SDIN` from the microphone, `SDOUT` to the amplifier. Amplifier `SD` on a GPIO so it can drop to sub-µA between utterances.
 
+> **"Only the data line changes" undersells this.** The SPH0645 is notorious on
+> ESP32 for its data alignment: it emits left-justified data that requires
+> **32-bit slots**, with the useful 18 bits offset inside the word, and the
+> ESP32 I2S peripheral has its own quirks on top. Expect a weekend of getting
+> nothing but noise or silence before the bit alignment is right. It is a solved
+> problem with plenty of forum threads — just do not budget an afternoon for it.
+> *(Noted 2026-08-08 after external review.)*
+
 Device-side loop:
 
 ```
@@ -132,4 +140,20 @@ At ~427 audio tokens per minute of audio, on Novita at $0.25/M in and $0.97/M ou
 | Daily user, 20 min/day | **~$0.19/month** |
 | 20-person pilot, two weeks | **< $2 total** |
 
-Inference cost is roughly 1% of any plausible subscription. It is not a design variable — do not optimise it, and do not let it justify self-hosting.
+**Those figures assume one generation per turn.** They do not survive naive
+speculative pre-generation:
+
+| Strategy | Output tokens/day (8 h) | Cost/month |
+|---|---|---|
+| Generate on turn-end only | ~30 k | **~$1** |
+| Regenerate every 2 s | ~720 k | **~$21** |
+
+Still not ruinous, but 20× the headline and for worse answers — see
+[ARCHITECTURE.md](ARCHITECTURE.md#the-unsolved-problem-in-pre-generation). The
+architecture that keeps cost low *and* answers good is to pre-generate context
+(rolling summary, warm retrieval, hot prompt cache) and generate the answer once,
+on a complete turn.
+
+With that shape, inference cost is roughly 1% of any plausible subscription. It
+is not a design variable — do not optimise it, and do not let it justify
+self-hosting.

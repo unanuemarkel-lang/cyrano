@@ -135,19 +135,36 @@ Total soldering: ~6 joints for the mic header, ~7 for the amp header. **The tran
 
 ## Power budget
 
+> **Corrected 2026-08-08 after external review.** An earlier version quoted
+> 12–25 mA for "BLE/Wi-Fi" and concluded 15–20 hours, then compared that to
+> Omi. Both were wrong: it conflated two power regimes an order of magnitude
+> apart, and Omi runs different silicon.
+
+### Fixed loads
+
 | Block | Draw |
 |---|---|
-| MCU: BLE/Wi-Fi + capture + DSP | 12–25 mA |
 | MEMS microphone | ~1 mA |
 | MAX98357A idle | 2.4 mA |
 | MAX98357A in shutdown | **< 1 µA** |
 | MAX98357A playing | 60–250 mA peak |
 
-A coach speaking 3 seconds every two minutes is a **~2.5% duty cycle**, which turns those peaks into 2–3 mA average.
+A coach speaking 3 seconds every two minutes is a **~2.5% duty cycle**, which turns those output peaks into 2–3 mA average. **The output path is not the problem.**
 
-**Total ~20–30 mA average → 15–20 hours on a 500 mAh cell.** Consistent with the 24 h Omi reports for continuous capture on comparable silicon.
+### The radio is the problem
 
-Wi-Fi instead of BLE cuts this substantially. Acceptable for bench validation, not for a wearable.
+| Configuration | MCU average | Total | 500 mAh cell |
+|---|---|---|---|
+| ESP32-S3, **Wi-Fi** streaming continuously | **~120 mA** (peaks 300+) | ~125 mA | **~4 hours** |
+| ESP32-S3, active, radio idle | ~23 mA | ~28 mA | ~18 hours |
+| ESP32-S3, **BLE** streaming Opus | ~30–50 mA *(estimate — measure it)* | ~35–55 mA | 9–14 hours |
+| nRF5340, BLE + Opus | 12–20 mA | ~15–23 mA | 24 h+ |
+
+**Wi-Fi is a bench transport, not a wearable one.** Four hours is enough for a day of desk testing. It is not enough to wear.
+
+**BLE on ESP32-S3 is a workable middle**, but it is not nRF-class and the figure above is an estimate, not a measurement. Verify it before designing an enclosure around a battery size.
+
+**The 24-hour class requires leaving ESP32-S3.** Omi reports 24 h+ of continuous capture on an nRF5340 with BLE and Opus — different chip, different power architecture, not reachable from ESP32-S3 by tuning firmware. Treat the migration to nRF5340 + Zephyr as the price of all-day battery, and pay it only once Phases 1 and 0 have passed.
 
 ## Safety
 

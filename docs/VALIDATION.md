@@ -2,17 +2,86 @@
 
 ## Principle
 
-Five unknowns. **The two that can kill the project require building nothing.** They are independent of each other, so run them in parallel. Phases 2–4 are only worth starting if both pass.
+Five unknowns. **The two that can kill the project require building nothing.** Phases 2–4 are only worth starting if both pass.
 
 Write every kill criterion down **before** collecting data.
 
-| Phase | Question | Cost | Time |
-|---|---|---|---|
-| **0** | Does a body-worn mic capture the other person in real noise? | $14 + card | a weekend |
-| **1** | Is a 3-word prompt at 2 s useful or distracting? | €0 | a weekend |
-| 2 | Is bone-conducted speech intelligible at sane power? | $25 | a weekend |
-| 3 | Does own-voice detection hold up? | $10 | a weekend |
-| 4 | Integration, battery, enclosure | rest | weeks |
+| Order | Phase | Question | Cost | Time |
+|---|---|---|---|---|
+| 1st | **1** | Is a 3-word prompt at 2 s useful, or does it make you converse worse? | **€0** | a weekend |
+| 2nd | **0** | Does a body-worn mic capture the other person in real noise? | $14 + card | a weekend |
+| 3rd | 2 | Is bone-conducted speech intelligible at sane power? | $25 | a weekend |
+| 4th | 3 | Does own-voice detection hold up? | $10 | a weekend |
+| 5th | 4 | Integration, battery, enclosure | rest | weeks |
+
+*Phase numbers are kept as originally published so cross-references elsewhere in
+the repo stay valid; the execution order is the left column.*
+
+---
+
+> **Run Phase 1 first, then Phase 0.** They are independent, but Phase 1 costs
+> nothing, needs no soldering, and tests the question that decides the product.
+> If you do not reach for the coach by the fifth real conversation, you have
+> saved yourself the entire bill of materials. *(Reordered 2026-08-08 after
+> external review; the first version said "in parallel" and listed Phase 0
+> first.)*
+
+---
+
+## Phase 1 — the coach
+
+Runs entirely on a laptop with wired earbuds. No hardware, no soldering, no dependency on Phase 0.
+
+### Setup
+
+Python loop implementing the real design: rolling context, pre-generation on the other speaker's turn-end, buffered suggestion, manual key as a stand-in for double-tap, 5-word output cap.
+
+Point at Novita. DashScope's free tier (1M tokens ≈ 39 audio-hours over 90 days) also covers this at zero cost if you want a second model for comparison.
+
+### Protocol
+
+Use it yourself in **five real conversations**. Not demos, not tests with a friend who knows what you are doing. Real ones where you actually want to say something well.
+
+### Measure
+
+| Metric | Why |
+|---|---|
+| Times you triggered it per conversation | Engagement |
+| Times the suggestion was actually useful | Precision |
+| Times it fired and you ignored it | Noise rate |
+| Perceived latency: trigger → first syllable | Must stay under ~800 ms |
+| How often the model correctly returned silence | Is the restraint working |
+| Whether you kept reaching for it by conversation five | The one that matters most |
+
+### Measure performance, not sensation
+
+*Added 2026-08-08 after external review, and it changes the protocol.*
+
+Every metric above is self-report, and self-report cannot detect the failure
+mode that matters here. **The feeling of having a superpower and the fact of
+conversing worse coexist perfectly well.** A wearer who enjoys the device will
+rate it useful whether or not their conversations improved. See risk 4,
+[cognitive interference](RISKS.md).
+
+So add at least one objective measure:
+
+- **Alternate.** Run conversations coached and uncoached in a mixed order,
+  rather than using the coach in all five. Without a baseline there is nothing
+  to compare against.
+- **Record both conditions** and score them afterwards, when the novelty has
+  worn off — did you actually say better things, or just feel equipped?
+- **Best available:** have the other party rate the conversation, blind to
+  whether the coach was running. Heavier, and by far the most honest signal.
+
+If that is too much for a personal prototype, alternating and re-listening is
+the minimum. Do not skip it entirely — it is the whole difference between
+measuring the product and measuring your enthusiasm.
+
+### Kill criterion
+
+> If it distracts more than it helps after five real conversations, stop. No hardware fixes this.
+
+This is the honest one. The instinct will be to blame the model, the prompt, the latency. Sometimes that is true — but if a 3-word prompt at 2 seconds is fundamentally the wrong interaction for live conversation, the entire product is wrong, and $80 of components will not reveal that any better than a laptop does.
 
 ---
 
@@ -51,39 +120,6 @@ Measure:
 > If the other speaker's transcript is unusable in the bar condition, better firmware and better models do not fix it. Change the microphone strategy, change placement, or change the use case.
 
 An outward-facing directional mic, a mic array, or a chest/lapel position rather than the head are all live options — but you need this data before choosing.
-
----
-
-## Phase 1 — the coach
-
-Runs entirely on a laptop with wired earbuds. No hardware, no soldering, no dependency on Phase 0.
-
-### Setup
-
-Python loop implementing the real design: rolling context, pre-generation on the other speaker's turn-end, buffered suggestion, manual key as a stand-in for double-tap, 5-word output cap.
-
-Point at Novita. DashScope's free tier (1M tokens ≈ 39 audio-hours over 90 days) also covers this at zero cost if you want a second model for comparison.
-
-### Protocol
-
-Use it yourself in **five real conversations**. Not demos, not tests with a friend who knows what you are doing. Real ones where you actually want to say something well.
-
-### Measure
-
-| Metric | Why |
-|---|---|
-| Times you triggered it per conversation | Engagement |
-| Times the suggestion was actually useful | Precision |
-| Times it fired and you ignored it | Noise rate |
-| Perceived latency: trigger → first syllable | Must stay under ~800 ms |
-| How often the model correctly returned silence | Is the restraint working |
-| Whether you kept reaching for it by conversation five | The only metric that matters |
-
-### Kill criterion
-
-> If it distracts more than it helps after five real conversations, stop. No hardware fixes this.
-
-This is the honest one. The instinct will be to blame the model, the prompt, the latency. Sometimes that is true — but if a 3-word prompt at 2 seconds is fundamentally the wrong interaction for live conversation, the entire product is wrong, and $80 of components will not reveal that any better than a laptop does.
 
 ---
 
