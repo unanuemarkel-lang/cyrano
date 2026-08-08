@@ -61,7 +61,7 @@ And with a zero-latency model you would *still* need ~4 seconds to hear a spoken
 
 **The fix is not speed, it is prediction and brevity:**
 
-- **Pre-generate.** Humans don't react to end-of-turn, they predict it and prepare in advance. Generate the suggestion *while* the other person is still talking, buffer it, and release it on a trigger. This collapses the first 1.2–2.9 s to near zero.
+- **Pre-generate the context, not the answer.** While they talk, keep a rolling summary and warm retrieval ready; generate the five-word suggestion once, at turn-end, when you finally know what was asked. Buffer it and release it on a trigger. *(Corrected 2026-08-08: this bullet previously said "generate the suggestion while the other person is still talking", which contradicted the architecture — the payload of a turn usually arrives in its last two seconds. See [the open problem in pre-generation](docs/ARCHITECTURE.md#the-unsolved-problem-in-pre-generation).)*
 - **Telegraphic output, hard capped at 5 words.** Not *"You could tell them the Civil War began in 1936 with the July coup"* (6 seconds) but *"1936. July coup."* (1.5 seconds). The coach supplies ammunition, not scripts.
 
 Combined: **under 2 seconds**, which a natural filler ("right… well…") can cover.
@@ -172,7 +172,7 @@ The bone transducer vibrates the chassis by design. That vibration reaches both 
 
 **No phone app.** With Wi-Fi the device talks HTTPS to the backend directly. That removes Swift, CoreBluetooth, `AVAudioSession`, App Store review, and iOS background-execution limits from the project entirely. Add BLE and a phone app only when you need to leave known networks.
 
-Full detail: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+Full detail: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · backend, prompt spec and firmware in [docs/SOFTWARE.md](docs/SOFTWARE.md)
 
 ## Bill of materials
 
@@ -249,7 +249,13 @@ well-documented failure saves everyone else the $80.
 
 ## Revision history
 
-**2026-08-08** — Second pass after external review. Four corrections to things
+**2026-08-08 (third pass)** — A second review found the first correction was incomplete: two stale battery figures survived, this README still contradicted the corrected architecture, the "trigger releases audio that already exists" claim was false when the wearer taps immediately, and a ~400 ms latency estimate undercut this repo's own cited source of 632 ms. All fixed. No new claims added.
+
+**This is the last documentation-only commit.** Two reviewers have now made the
+same point and it is correct: three commits of prose and zero measurements. The
+next commit is a WAV recorded in a bar, or there isn't one.
+
+**2026-08-08 (second pass)** — After external review. Four corrections to things
 the first version got wrong: an overstated battery budget (3–4×), conflating
 speaker diarization with addressee detection, pre-generation described without
 acknowledging it fires on incomplete context, and a legal section that missed

@@ -171,7 +171,7 @@ Add a high-ODR IMU breakout (LSM6DS3 reaches 6.6 kHz) or use a spare transducer 
 
 LiPo on the XIAO BAT pads, FPC antenna standing off from the skull, Wi-Fi to the backend, printed enclosure with real clamping pressure.
 
-Measure actual battery life against the ~15–20 h estimate. Add BLE and a phone client only when you need to leave known Wi-Fi.
+Measure actual battery life against the [corrected budget](HARDWARE.md#power-budget): expect **~4 h over Wi-Fi**. Add BLE and a phone client once you need to leave known networks — and note that the 9–14 h BLE figure is an estimate nobody has verified, so measuring it is itself a deliverable of this phase.
 
 ---
 

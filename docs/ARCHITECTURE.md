@@ -124,7 +124,16 @@ Other person speaking ───────────────────�
         double tap ────────────┴──► play
 ```
 
-The trigger does not start a request. It **releases audio that already exists**. Time-to-first-syllable becomes playback latency, and the total becomes the ~1.5 s it takes to speak five words.
+The trigger releases buffered audio **when the buffer is warm** — which is not guaranteed.
+
+*Corrected 2026-08-08: an earlier version claimed the trigger "releases audio that already exists", full stop. It does not. Generation starts at turn-end (see below), so if you tap the instant the other person stops, nothing is buffered yet and you pay the full generation latency. The buffer is only warm if some time passed between turn-end and tap.*
+
+| Gap between turn-end and tap | What you get |
+|---|---|
+| ~0 s (tap immediately) | Full generation latency, 600–1500 ms |
+| 1–2 s (you thought first) | Buffer warm, playback latency only |
+
+In practice the second case is common — the wearer usually spends a moment deciding whether they need help. But it is a tendency, not an invariant, and the worst case is the design's real latency.
 
 This mirrors what humans do: formulating a response takes ≥600 ms, yet people answer within 200 ms, because they predict the end of the turn and prepare in advance.
 
@@ -166,15 +175,31 @@ on turn-end (context now complete):
 
 The expensive, slow parts — understanding the conversation, retrieving what is
 relevant, loading context — happen while they are still talking. Only the final
-short generation waits for the complete turn, and with a warm prompt cache that
-can plausibly land under ~400 ms.
+short generation waits for the complete turn.
 
 That is still pre-generation. It pre-generates the **raw material** rather than
 the product.
 
-**This is untested.** Whether a sub-400 ms final generation is achievable
-against a hosted endpoint from Spain is exactly the kind of thing Phase 1 must
-measure rather than assume.
+**How fast the final generation actually is, is unknown — and two earlier
+guesses in this document were wrong.**
+
+*Corrected 2026-08-08: a previous version claimed this "can plausibly land under
+~400 ms". That contradicted this repo's own sources, which cite 632 ms audio
+TTFP from the vLLM-Omni benchmarks. Promising a number below your own cited
+evidence is exactly the failure mode a risk register is supposed to prevent.*
+
+Two reasons not to assume a fast path:
+
+- **632 ms is the measured figure**, and that was a tuned three-GPU deployment,
+  not a hosted endpoint reached from Spain. Treat it as the optimistic bound,
+  not the target.
+- **Prompt caching over *audio* input is not something to count on today.** Text
+  prompt caching is widely available; audio-token caching at hosted omni
+  providers is not documented and should be verified before any design depends
+  on it.
+
+Measuring real end-to-end latency from Spain, with and without a warm context,
+is a **deliverable of Phase 1** — not an assumption it rests on.
 
 ## Output contract
 

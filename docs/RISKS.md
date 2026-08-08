@@ -150,11 +150,15 @@ Never design a custom RF PCB. Certified modules only.
 
 ---
 
-## 10. Battery 🟡
+## 10. Battery 🟠
 
 Always-on listening is brutal on wearables: Amazon's Bee drops from an advertised 7 days to 1.5–2 days in real use, a >70% reduction.
 
-The estimate here (~20–30 mA average, 15–20 h on 500 mAh) depends on a low playback duty cycle and on the amplifier shutdown pin being under MCU control. If the coach ends up talking far more than 2.5% of the time, redo the budget.
+Corrected figures, per the [power budget](HARDWARE.md#power-budget): **~4 hours over Wi-Fi**, 9–14 h over BLE on ESP32-S3 (an estimate, not a measurement), 24 h+ only on nRF5340.
+
+Two consequences that make this more than a yellow risk. All-day operation is **not reachable by tuning firmware** — it requires migrating to different silicon, with the Zephyr learning curve that implies. And the BLE number, which is the one the wearable actually depends on, has never been measured.
+
+Everything above still assumes a low playback duty cycle and the amplifier shutdown pin under MCU control. If the coach talks far more than 2.5% of the time, redo the budget again.
 
 ---
 
@@ -164,4 +168,6 @@ Latency and turn-taking: modal inter-turn gap ~200 ms across languages; response
 
 ## Revision history
 
-**2026-08-08** — Second pass after an external review of the initial commit. Four corrections, all of them things the first version got wrong rather than merely omitted: the power budget conflated Wi-Fi and BLE regimes and overstated battery life by 3–4×; the README presented speaker diarization as if it solved addressee detection and claimed "no false positives"; pre-generation was described without acknowledging that it generates against incomplete context; and the legal section missed GDPR Chapter V transfers and the Meta/Limitless EU withdrawal. A new risk (cognitive interference) was added. Validation phase order was swapped.
+**2026-08-08 (third pass)** — A second review of the corrected version found that the first correction was incomplete. Two stale battery figures survived in this file and in VALIDATION.md, contradicting the new table. The README still said "generate while the other person is still talking", contradicting the architecture it was supposed to have been aligned with. The claim that the trigger "releases audio that already exists" was false whenever the wearer taps immediately at turn-end. And a ~400 ms latency estimate contradicted this repo's own cited source of 632 ms. All four fixed; battery raised from 🟡 to 🟠. **No new claims were added in this pass.**
+
+**2026-08-08 (second pass)** — After an external review of the initial commit. Four corrections, all of them things the first version got wrong rather than merely omitted: the power budget conflated Wi-Fi and BLE regimes and overstated battery life by 3–4×; the README presented speaker diarization as if it solved addressee detection and claimed "no false positives"; pre-generation was described without acknowledging that it generates against incomplete context; and the legal section missed GDPR Chapter V transfers and the Meta/Limitless EU withdrawal. A new risk (cognitive interference) was added. Validation phase order was swapped.
