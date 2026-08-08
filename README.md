@@ -64,7 +64,7 @@ And with a zero-latency model you would *still* need ~4 seconds to hear a spoken
 - **Pre-generate the context, not the answer.** While they talk, keep a rolling summary and warm retrieval ready; generate the five-word suggestion once, at turn-end, when you finally know what was asked. Buffer it and release it on a trigger. *(Corrected 2026-08-08: this bullet previously said "generate the suggestion while the other person is still talking", which contradicted the architecture — the payload of a turn usually arrives in its last two seconds. See [the open problem in pre-generation](docs/ARCHITECTURE.md#the-unsolved-problem-in-pre-generation).)*
 - **Telegraphic output, hard capped at 5 words.** Not *"You could tell them the Civil War began in 1936 with the July coup"* (6 seconds) but *"1936. July coup."* (1.5 seconds). The coach supplies ammunition, not scripts.
 
-Combined: **under 2 seconds**, which a natural filler ("right… well…") can cover.
+Combined, the target is **around 2 seconds** — coverable by a natural filler ("right… well…"). Whether it is reachable is unmeasured: it holds only when the buffer is warm, and the cold case adds the full generation latency on top. See [pre-generation](docs/ARCHITECTURE.md#the-unsolved-problem-in-pre-generation). **This is a design target, not a result.**
 
 ### 2. Two separate problems: who is speaking, and who they are speaking to
 

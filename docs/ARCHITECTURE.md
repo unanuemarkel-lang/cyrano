@@ -218,7 +218,7 @@ The coach supplies ammunition, not scripts. Full prompt specification in [SOFTWA
 
 | | |
 |---|---|
-| First-packet latency | **234 ms** cold-start (reported) |
+| First-packet latency | 234 ms vendor-reported (theoretical, cold start) — but **632 ms measured** by vLLM-Omni at concurrency 64. Use the measured figure |
 | Text→voice tool-calling degradation | **1.8 points** — smallest in class (GPT-Realtime-1.5: 4.8) |
 | Speech input / output languages | 19 / 10 (Spanish in both) |
 | Weights | Apache 2.0 |
